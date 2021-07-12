@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+sn3218 = "*"
+st7036 = "*"
+rpi-gpio = "*"
+spidev = "*"
+cap1xxx = "*"
+smbus = "*"
+psutil = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"

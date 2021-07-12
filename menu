@@ -1,0 +1,87 @@
+#!/usr/bin/env pipenv-shebang
+
+import time
+
+import dothat.backlight as backlight
+import dothat.lcd as lcd
+import dothat.touch as nav
+
+from dot3k.menu import Menu, MenuOption
+from plugins.clock import Clock
+from plugins.graph import IPAddress, GraphTemp, GraphCPU, GraphNetTrans, GraphNetSpeed
+from plugins.text import Text
+from plugins.utils import Backlight, Contrast
+#from plugins.wlan import Wlan
+from plugins.status import Status
+from plugins.rpisys import SysShutdown, SysReboot, Exit
+#from plugins.blank import Blank
+from plugins.deluge import Deluge
+#from plugins.docker import Docker, List
+
+import threading
+
+class Menu(Menu):
+
+    def updatemenu(self, structure):
+        self.menu_options = structure
+        if type(self.menu_options) is dict or type(self.menu_options) is OrderedDict:
+            self._setup_menu(self.menu_options)
+
+#    def submenuworker(self, submenu):
+        #update = threading.Thread(None, self.do_update)
+        #update.daemon = True
+        #update.start()
+
+
+
+idle_handler = Status(backlight)
+idle_timeout = 30
+input_handler = Text()
+
+menu = Menu(
+    structure={
+        'Status': Status(backlight),
+#        'Docker': Docker(lcd, idle_handler, idle_timeout, input_handler),
+        'Deluge': Deluge(),
+        'Information': {
+            'Clock': Clock(backlight),
+            'Internet': {
+                'Speed': GraphNetSpeed(),
+                'Total Data': GraphNetTrans(),
+                'IP': IPAddress(),
+#                'WiFi': Wlan()
+            },
+            'CPU': GraphCPU(backlight),
+            'Temp': GraphTemp()
+        },
+        'Settings': {
+            'Contrast': Contrast(lcd),
+            'Backlight': Backlight(backlight)
+        },
+        'System': {
+            'Reboot': {
+                'Confirm?': SysReboot()
+            },
+            'Shutdown': {
+                'Confirm?': SysShutdown()
+            },
+            'Exit': {
+                'Confirm?': Exit()
+            }
+        }
+    },
+    lcd=lcd,
+    idle_handler=idle_handler,
+    idle_timeout=idle_timeout,
+    input_handler=input_handler)
+
+"""
+You can use anything to control dot3k.menu,
+but you'll probably want to use dot3k.touch
+"""
+nav.bind_defaults(menu)
+menu.idle_handler.setup(menu.config)
+
+while 1:
+    menu.redraw()
+    time.sleep(0.2)
